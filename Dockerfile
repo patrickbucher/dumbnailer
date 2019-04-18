@@ -11,6 +11,6 @@ RUN apt-get update && apt-get install -y imagemagick && apt-get autoclean
 COPY --from=builder /app/dumbnailer /bin/dumbnailer
 ENV DUMBNAILER_PORT="8888" IMAGE_MAGICK="/usr/bin/convert"
 EXPOSE $DUMBNAILER_PORT
-RUN groupadd -g 1001 gopher && useradd -g 1001 gopher
+RUN groupadd -g 1001 gopher && useradd -g 1001 -u 1001 -M gopher
 USER gopher
 CMD ["/bin/dumbnailer"]
