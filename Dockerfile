@@ -3,7 +3,7 @@ LABEL maintainer="Patrick Bucher <patrick.bucher@stud.hslu.ch>"
 RUN apt-get update && apt-get install -y git ca-certificates
 COPY *.go go.mod /src/
 WORKDIR /src
-RUN go build -o /app/dumbnailer
+RUN go test && go build -o /app/dumbnailer
 
 FROM debian:stretch-slim
 LABEL maintainer="Patrick Bucher <patrick.bucher@stud.hslu.ch>"
