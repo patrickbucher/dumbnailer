@@ -14,53 +14,26 @@ import (
 	"time"
 )
 
-const command = "/usr/bin/convert" // ImageMagick
+var command = "/usr/bin/convert" // ImageMagick
 
 type Response struct {
 	Images []string `json:"base64Images"`
 }
 
-type Meta struct {
-	Page        int          `json:"page"`
-	Resolutions []Resolution `json:"resolutions"`
-}
-
-type Resolution struct {
-	Width  int `json:"width"`
-	Height int `json:"height"`
-}
-
-func (m *Meta) prepareCommand(pdfFileName string) ([]string, []*os.File, error) {
-	var args []string
-	var files []*os.File
-	args = append(args, fmt.Sprintf("%s[%d]", pdfFileName, m.Page-1))
-	args = append(args, "-flatten")
-	for i, res := range m.Resolutions {
-		args = append(args, "-thumbnail")
-		args = append(args, fmt.Sprintf("%dx%d!", res.Width, res.Height))
-		if i != len(m.Resolutions)-1 {
-			args = append(args, "-write") // intermediate step
-		}
-		file, err := ioutil.TempFile("", "*.jpg")
-		if err != nil {
-			return nil, nil, fmt.Errorf("create temp file: %v", err)
-		}
-		args = append(args, file.Name())
-		files = append(files, file)
-	}
-	return args, files, nil
-}
-
 func main() {
 	http.HandleFunc("/v1/canary", canary)
 	http.HandleFunc("/v1/generatemultiple", generatemultiple)
+	imgmgck := os.Getenv("IMAGE_MAGICK")
+	if imgmgck != "" {
+		command = imgmgck
+	}
 	port := os.Getenv("DUMBNAILER_PORT")
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, nil))
 }
 
 func canary(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+	w.Write([]byte("ok\n"))
 }
 
 func generatemultiple(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +56,11 @@ func generatemultiple(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusInternalServerError, "storing PDF: %v", err)
 		return
 	}
-	defer os.Remove(pdfFileName)
+	defer func() {
+		if err := os.Remove(pdfFileName); err != nil {
+			log.Printf("deleting %s: %v", pdfFileName, err)
+		}
+	}()
 	args, files, err := meta.prepareCommand(pdfFileName)
 	if err != nil {
 		fail(w, http.StatusInternalServerError, "preparing dumbnailer command: %v", err)
@@ -99,24 +76,35 @@ func generatemultiple(w http.ResponseWriter, r *http.Request) {
 	}
 	duration := finished.Sub(started)
 	log.Printf("%s %s [%v]", command, strings.Join(args, " "), duration)
+	resp, err := base64Response(files)
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "files to base64 response: %v", err)
+		return
+	}
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(resp)
+}
+
+func base64Response(files []*os.File) ([]byte, error) {
 	var base64Thumbnails []string
 	for _, f := range files {
 		content, err := ioutil.ReadAll(f)
 		if err != nil {
-			fail(w, http.StatusInternalServerError, "reading from file %s: %v", f.Name(), err)
+			return nil, fmt.Errorf("reading from file %s: %v", f.Name(), err)
+		}
+		if err := os.Remove(f.Name()); err != nil {
+			log.Printf("deleting %s: %v", f.Name(), err)
 		}
 		encoded := base64.StdEncoding.EncodeToString(content)
 		base64Thumbnails = append(base64Thumbnails, encoded)
 	}
 	var response Response
 	response.Images = base64Thumbnails
-	jsonThubnails, err := json.Marshal(response)
+	base64Response, err := json.Marshal(response)
 	if err != nil {
-		fail(w, http.StatusInternalServerError, "encoding thumbnails to base64 JSON: %v", err)
-		return
+		return nil, fmt.Errorf("encoding thumbnails to base64 JSON: %v", err)
 	}
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(jsonThubnails)
+	return base64Response, nil
 }
 
 func store(pdfReader io.Reader) (string, error) {
