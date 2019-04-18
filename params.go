@@ -8,18 +8,18 @@ import (
 )
 
 type Meta struct {
-	Page        int        `json:"page"`
+	Page        uint       `json:"page"`
 	Resolutions Dimensions `json:"resolutions"`
 }
 
 type Dimensions []Resolution
 
 type Resolution struct {
-	Width  int `json:"width"`
-	Height int `json:"height"`
+	Width  uint `json:"width"`
+	Height uint `json:"height"`
 }
 
-func (r Resolution) Size() int {
+func (r Resolution) Size() uint {
 	return r.Width * r.Height
 }
 

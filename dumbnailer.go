@@ -28,7 +28,7 @@ func main() {
 	if imgmgck != "" {
 		command = imgmgck
 	}
-	port := os.Getenv("DUMBNAILER_PORT")
+	port := os.Getenv("PORT")
 	log.Printf("dumbnailer listening on port %s\n", port)
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, nil))
 }
