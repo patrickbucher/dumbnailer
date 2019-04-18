@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 	"time"
 )
@@ -85,8 +86,14 @@ func generatemultiple(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+type base64Junks []string
+
+func (b base64Junks) Len() int           { return len(b) }
+func (b base64Junks) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b base64Junks) Less(i, j int) bool { return len(b[i]) < len(b[j]) }
+
 func base64Response(files []*os.File) ([]byte, error) {
-	var base64Thumbnails []string
+	var base64Thumbnails base64Junks
 	for _, f := range files {
 		content, err := ioutil.ReadAll(f)
 		if err != nil {
@@ -98,6 +105,10 @@ func base64Response(files []*os.File) ([]byte, error) {
 		encoded := base64.StdEncoding.EncodeToString(content)
 		base64Thumbnails = append(base64Thumbnails, encoded)
 	}
+
+	// ascending order of thumbnail size (resolution)
+	sort.Sort(base64Thumbnails)
+
 	var response Response
 	response.Images = base64Thumbnails
 	base64Response, err := json.Marshal(response)
