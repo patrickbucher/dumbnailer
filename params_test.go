@@ -12,12 +12,26 @@ var prepareCommandTests = []struct {
 	expectedArgs []string
 }{
 	{Meta{Page: 1, Resolutions: Dimensions{
+		{Width: 64, Height: 100},
+	}},
+		"portrait.pdf",
+		[]string{"portrait.pdf[0]", "-flatten", "-thumbnail", "64x100!", imagePlaceholder},
+	},
+	{Meta{Page: 7, Resolutions: Dimensions{
+		{Width: 800, Height: 600},
+		{Width: 1024, Height: 768},
+	}},
+		"screenshot.pdf",
+		[]string{"screenshot.pdf[6]", "-flatten", "-thumbnail", "1024x768!", "-write", imagePlaceholder,
+			"-thumbnail", "800x600!", imagePlaceholder},
+	},
+	{Meta{Page: 1, Resolutions: Dimensions{
 		{Width: 100, Height: 150},
 		{Width: 300, Height: 450},
 		{Width: 200, Height: 300},
 	}},
 		"input.pdf",
-		[]string{"input.pdf[0]", "-flatten", "-thumbnail", "300x450!", "-write", "{IMAGE}",
+		[]string{"input.pdf[0]", "-flatten", "-thumbnail", "300x450!", "-write", imagePlaceholder,
 			"-thumbnail", "200x300!", "-write", imagePlaceholder,
 			"-thumbnail", "100x150!", imagePlaceholder},
 	},
