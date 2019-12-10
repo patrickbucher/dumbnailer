@@ -1,0 +1,16 @@
+#!/bin/sh
+
+SOURCE_FOLDER='/tmp/src/dumbnailer.go'
+
+echo 'checking'
+stat "$SOURCE_FILE" > /dev/null
+if [ $? -ne 0 ]; then
+    echo "$SOURCE_FILE does not exist, exiting"
+    exit 1
+fi
+
+echo 'copying'
+cp *.go $SRC_DIR/
+
+echo 'building'
+go build -o $BIN_DIR/dumbnailer $SRC_DIR/dumbnailer.go

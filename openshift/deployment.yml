@@ -1,0 +1,183 @@
+image_name: dumbnailer
+apiVersion: v1
+kind: List
+items:
+
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: dumbnailer-base
+    labels:
+      build: dumbnailer
+
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: dumbnailer-s2i
+    labels:
+      build: dumbnailer
+
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    name: dumbnailer
+    labels:
+      build: dumbnailer
+
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: dumbnailer-base
+    labels:
+      build: dumbnailer
+  spec:
+    runPolicy: Serial
+    source:
+      type: Git
+      git:
+        uri: 'https://github.com/patrickbucher/dumbnailer.git'
+      contextDir: base
+    strategy:
+      type: Docker
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'dumbnailer-base:latest'
+    triggers:
+      - type: ConfigChange
+
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: dumbnailer-s2i
+    labels:
+      build: dumbnailer
+  spec:
+    runPolicy: Serial
+    source:
+      type: Git
+      git:
+        uri: 'https://github.com/patrickbucher/dumbnailer.git'
+      contextDir: s2i
+    strategy:
+      type: Docker
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: 'dumbnailer-base:latest'
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'dumbnailer-s2i:latest'
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          from:
+            kind: ImageStreamTag
+            name: 'dumbnailer-base:latest'
+
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: dumbnailer
+    labels:
+      build: dumbnailer
+  spec:
+    RunPolicy: Serial
+    source:
+      type: Git
+      git:
+        uri: 'https://github.com/patrickbucher/dumbnailer.git'
+    strategy:
+      type: Source
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: 'dumbnailer-s2i:latest'
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'dumbnailer:latest'
+    triggers:
+      - type: ConfigChange
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          from:
+            kind: ImageStreamTag
+            name: 'dumbnailer-s2i:latest'
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: dumbnailer
+    labels:
+      app: dumbnailer
+  spec:
+    template:
+      metadata:
+        labels:
+          name: dumbnailer
+      spec:
+        containers:
+          - name: dumbnailer
+            image: 'dumbnailer:latest'
+            ports:
+              - containerPort: 8888
+                protocol: TCP
+    replicas: 1
+    triggers:
+      - type: 'ConfigChange'
+      - type: 'ImageChange'
+        imageChangeParams:
+          automatic: true
+          containerNames:
+            - 'dumbnailer'
+          from:
+            kind: 'ImageStreamTag'
+            name: 'dumbnailer:latest'
+    strategy:
+      type: Rolling
+    readinessProbe:
+      httpGet:
+        path: /canary
+        port: 8888
+      initialDelaySeconds: 5
+      timeoutSeconds: 2
+    livenessProbe:
+      httpGet:
+        path: /canary
+        port: 8888
+      initialDelaySeconds: 5
+      timeoutSeconds: 2
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: dumbnailer
+    labels:
+      app: dumbnailer
+  spec:
+    ports:
+      - name: 8888-tcp
+        port: 8888
+        targetPort: 8888
+        protocol: TCP
+    selector:
+      deploymentconfig: dumbnailer
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: dumbnailer
+    labels:
+      app: dumbnailer
+  spec:
+    path: /thumbnail
+    port:
+      targetPort: 8888-tcp
+    to:
+      kind: Service
+      name: dumbnailer

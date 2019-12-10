@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo 'executing'
+exec $BIN_DIR/dumbnailer
