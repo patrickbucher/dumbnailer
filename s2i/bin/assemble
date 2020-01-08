@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SOURCE_FOLDER='/tmp/src/dumbnailer.go'
+SOURCE_FILE='/tmp/src/dumbnailer.go'
 
 echo 'checking'
 stat "$SOURCE_FILE" > /dev/null
