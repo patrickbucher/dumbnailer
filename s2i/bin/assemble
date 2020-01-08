@@ -10,9 +10,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo 'copying'
-cp /tmp/src/dumbnailer.go $SRC_DIR/
-cp -r /tmp/src/params $SRC_DIR/
-cp /tmp/src/go.mod $SRC_DIR/
+cp -r /tmp/src/* $SRC_DIR/
 
 echo 'building'
 go build -o $BIN_DIR/dumbnailer $SRC_DIR/dumbnailer.go
