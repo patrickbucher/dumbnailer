@@ -13,6 +13,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"dumbnailer/params"
 )
 
 var command = "/usr/bin/convert" // ImageMagick
@@ -48,7 +50,7 @@ func generatemultiple(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "'file' (PDF) missing: %v", err)
 		return
 	}
-	var meta Meta
+	var meta params.Meta
 	if err := json.Unmarshal([]byte(r.FormValue("meta")), &meta); err != nil {
 		fail(w, http.StatusBadRequest, "error decoding meta JSON: %v", err)
 		return
@@ -63,7 +65,7 @@ func generatemultiple(w http.ResponseWriter, r *http.Request) {
 			log.Printf("deleting %s: %v", pdfFileName, err)
 		}
 	}()
-	args, files, err := meta.prepareCommand(pdfFileName)
+	args, files, err := meta.PrepareCommand(pdfFileName)
 	if err != nil {
 		fail(w, http.StatusInternalServerError, "preparing dumbnailer command: %v", err)
 		return

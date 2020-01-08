@@ -1,4 +1,4 @@
-package main
+package params
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ func (d Dimensions) Len() int           { return len(d) }
 func (d Dimensions) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 func (d Dimensions) Less(i, j int) bool { return d[i].Size() < d[j].Size() }
 
-func (m *Meta) prepareCommand(pdfFileName string) ([]string, []*os.File, error) {
+func (m *Meta) PrepareCommand(pdfFileName string) ([]string, []*os.File, error) {
 	var args []string
 	var files []*os.File
 	args = append(args, fmt.Sprintf("%s[%d]", pdfFileName, m.Page-1))
