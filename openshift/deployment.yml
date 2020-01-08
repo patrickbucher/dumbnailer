@@ -175,7 +175,7 @@ items:
     labels:
       app: dumbnailer
   spec:
-    path: /thumbnail
+    path: /
     port:
       targetPort: 8888-tcp
     to:
