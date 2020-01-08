@@ -1,4 +1,4 @@
-package main
+package params
 
 import (
 	"testing"
@@ -39,7 +39,7 @@ var prepareCommandTests = []struct {
 
 func TestPrepareCommand(t *testing.T) {
 	for _, test := range prepareCommandTests {
-		args, files, err := test.input.prepareCommand(test.pdf)
+		args, files, err := test.input.PrepareCommand(test.pdf)
 		if err != nil {
 			t.Errorf("prepare command: %v", err)
 			break
