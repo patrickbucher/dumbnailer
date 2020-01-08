@@ -121,15 +121,16 @@ items:
         labels:
           name: dumbnailer
       spec:
+        - env:
+            - name: PORT
+              value: '8888'
+      spec:
         containers:
           - name: dumbnailer
             image: 'dumbnailer:latest'
             ports:
               - containerPort: 8888
                 protocol: TCP
-          - env:
-              - name: PORT
-                value: '8888'
     replicas: 1
     triggers:
       - type: 'ConfigChange'
