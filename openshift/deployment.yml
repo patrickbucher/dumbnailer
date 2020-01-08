@@ -127,9 +127,9 @@ items:
             ports:
               - containerPort: 8888
                 protocol: TCP
-          - env:
-            - name: PORT
-              value: '8888'
+        - env:
+          - name: PORT
+            value: '8888'
     replicas: 1
     triggers:
       - type: 'ConfigChange'
